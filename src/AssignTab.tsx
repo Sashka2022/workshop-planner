@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PEOPLE, WORKSHOPS } from './workshops';
+import { MAX_FIRST_CHOICE, PEOPLE, WORKSHOPS } from './workshops';
 import { buildResult } from './solver';
 import { deleteRanking, saveResult } from './api';
 import type { Ranking, Result } from './types';
@@ -106,7 +106,8 @@ export default function AssignTab({ rankings, result, isAdmin, onChanged }: Prop
             </div>
             <p className="note">
               יש 6 סדנאות ו־9 מקומות בשלושת הסבבים, ולכן חלק מהסדנאות ירוצו בשני סבבים עם משתתפים שונים. בכל סבב 3 סדנאות,
-              ובכל סדנה 3 מנחים.
+              ובכל סדנה 3 מנחים. כדי לשמור על קבוצות מאוזנות, לכל היותר {MAX_FIRST_CHOICE} מנחים יקבלו סדנה כבחירה ראשונה;
+              מי שנשאר יועבר לבחירה השנייה שלו.
             </p>
           </div>
         )}

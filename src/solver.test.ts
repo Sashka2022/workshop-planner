@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { buildResult } from './solver';
-import { GROUP, PEOPLE, ROUNDS, W } from './workshops';
+import { GROUP, MAX_FIRST_CHOICE, PEOPLE, ROUNDS, W } from './workshops';
 import type { Ranking } from './types';
 
 function randomRankings(): Ranking[] {
@@ -33,6 +33,9 @@ function check(rankings: Ranking[], cap: number) {
     assert.equal(inRound.size, PEOPLE);
   }
   for (const [, ws] of attended) assert.equal(new Set(ws).size, ROUNDS, 'three different workshops per person');
+  const firsts = new Array(W).fill(0);
+  for (const round of res.rounds) for (const b of round) for (const p of b.people) if (p.rank === 1) firsts[b.w]++;
+  for (const f of firsts) assert.ok(f <= MAX_FIRST_CHOICE, 'first-choice cap per workshop');
   for (const r of runs) assert.ok(r <= cap, 'cap respected');
   return res;
 }
@@ -46,4 +49,7 @@ const same: Ranking[] = Array.from({ length: PEOPLE }, (_, i) => ({
 }));
 const r = check(same, 2);
 console.log('same-taste avg rank:', r.avg, 'top3:', r.top3, '/', r.total);
+const firstOfTop = r.rounds.flat().filter((b) => b.w === 0).flatMap((b) => b.people).filter((p) => p.rank === 1).length;
+assert.ok(firstOfTop <= MAX_FIRST_CHOICE, 'popular workshop gives first choice to at most 4');
+console.log('same-taste: first-choice placements in the popular workshop:', firstOfTop);
 console.log('solver tests passed');

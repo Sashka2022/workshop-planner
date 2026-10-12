@@ -1,4 +1,4 @@
-import { GROUP, PEOPLE, ROUNDS, W } from './workshops';
+import { GROUP, MAX_FIRST_CHOICE, PEOPLE, ROUNDS, W } from './workshops';
 import type { Ranking, Result, Slot } from './types';
 
 const rnd = (k: number) => Math.floor(Math.random() * k);
@@ -28,24 +28,31 @@ const clone = (s: State): State => ({
 /**
  * Simulated annealing. Constraints are hard-coded by the state shape
  * (every round: 3 distinct workshops, 3 people each) plus penalties for
- * a person repeating a workshop and a workshop running more than `cap` rounds.
+ * a person repeating a workshop, a workshop running more than `cap` rounds, and
+ * a workshop having more than MAX_FIRST_CHOICE people who got it as their first choice
+ * (the extra people end up at their next best choice through the rank^2 cost).
  * Cost per placement is rank^2, which favours fairness over raw average.
  */
 export function solve(rank: number[][], cap: number, restarts = 30, iters = 30000) {
   const energy = (s: State): number => {
     let e = 0;
     const runs = new Array(W).fill(0);
+    const firsts = new Array(W).fill(0);
     const seen: number[][] = Array.from({ length: PEOPLE }, () => []);
     for (let r = 0; r < ROUNDS; r++) {
       for (let g = 0; g < GROUP; g++) runs[s.wsOf[r][g]]++;
       for (let p = 0; p < PEOPLE; p++) {
         const w = s.wsOf[r][s.assign[r][p]];
         e += rank[p][w] * rank[p][w];
+        if (rank[p][w] === 1) firsts[w]++;
         if (seen[p].includes(w)) e += 1000;
         seen[p].push(w);
       }
     }
-    for (let w = 0; w < W; w++) if (runs[w] > cap) e += 1000 * (runs[w] - cap);
+    for (let w = 0; w < W; w++) {
+      if (runs[w] > cap) e += 1000 * (runs[w] - cap);
+      if (firsts[w] > MAX_FIRST_CHOICE) e += 1000 * (firsts[w] - MAX_FIRST_CHOICE);
+    }
     return e;
   };
 
